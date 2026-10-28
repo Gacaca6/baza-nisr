@@ -1,0 +1,49 @@
+MAIN INDICATORS
+Report
+EICV7
+79
+9.1.1. Poverty Levels
+We now turn to the measurement of monetary poverty. The concept is straightforward: a person is poor if their level of 
+consumption per capita falls below the poverty line. The main poverty line is set at RWF 360,029 per adult equivalent per year 
+in the prices of January 2024. This is the updated poverty line compared to that used to measure poverty 2016/17(EICV5) 
+data, and a detailed discussion of how the line was chosen may be found in the 2023/24 poverty profile report.
+We also measure extreme poverty, using a poverty line of RWF 356,203 per adult equivalent per year, again in the prices of 
+January 2024. This is the cost of buying enough food to provide an adequate number of calories, with a diet that reflects the 
+observed behavior of poor households, but it does not make any allowance for non-food spending.
+Our key finding from the EICV7 survey is that the headcount poverty rate which measures the percentage of people who 
+are poor – was 27.4% in 2024 (Table 9.1 below). The poverty gap measure, which measures the proportion by which the 
+real consumption of the poor fell below the poverty line, stood at 6.0 in 2024. He poverty rate is lower in urban areas (17%) 
+compared to rural (32%). Provincially, Western province recorded the highest headcount poverty rate at 37% followed by 
+Southern province (35%), Eastern province (27%) and Northern province (20%) while the City of Kigali showed the lowest 
+headcount poverty rate at 9%.
+Table 9. 1: Headcount poverty rate (%)-EICV7 (2023-24)
+EICV7 Total Poverty rate (%) Std. error (%) 95%CI lower bound 95%CI upper bound CV Design effect
+Rwanda 27.4 0.5 26.4 28.3 1.8 1.9
+Area of residence
+Urban 16.7 0.9 14.9 18.5 5.4 2.5
+Rural 31.6 0.6 30.4 32.7 1.9 1.7
+Province
+City of Kigali 9.1 1.1 7.0 11.1 11.8 2.8
+Southern 34.7 1.0 32.7 36.7 2.9 1.5
+Western 37.4 1.2 35.1 39.7 3.1 1.9
+Northern 20.2 1.1 18.0 22.3 5.3 1.7
+Eastern 26.8 1.0 24.7 28.8 3.9 2.3
+Source: NISR, EICV7
+EICV7 data also revealed that extreme poverty rate stood at 5.4% at the national level (Table 9.2). Urban areas showed a lower 
+rate of extreme poverty that rural. Western Province remained on top of other provinces with an extreme poverty rate of 9%, 
+followed by Southern Province (7%).
+Table 9. 2: Headcount extreme poverty rate (%)-EICV7 (2023-24)
+ EICV7 Extreme Poverty rate (%) Std. error (%) 95% CI lower bound 95% CI upper bound CV Design effect
+Rwanda 5.4 0.3 4.9 6.0 4.9 2.1
+Area of residence
+Urban 3.1 0.4 2.2 3.9 13.7 2.5
+Rural 6.4 0.3 5.7 7.0 5.2 2.0
+Province
+City of Kigali 1.1* 0.4 0.3 1.9 36.2 3.0
+Southern 7.4 0.6 6.2 8.6 8.2 1.8
+Western 9.0 0.8 7.5 10.5 8.5 2.3
+Northern 3.2* 0.5 2.2 4.3 16.6 2.1
+Eastern 4.5 0.5 3.6 5.3 10.2 2.0
+Source: NISR, EICV7
+* indicates that the coefficient of variation (CV) of that estimate is greater than 15%
+Note

@@ -1,0 +1,19 @@
+"use client";
+import type {ChatAnswer,EvidenceRow,Language} from "@/lib/domain";
+import {ui} from "@/lib/i18n";
+import {experience} from "@/lib/experience";
+import {indicatorFor,VERSION} from "@/lib/evidence";
+import {rowsToCsv} from "@/lib/csv";
+import {ArrowUpRight,Download,ShieldCheck,Info} from "lucide-react";
+export function downloadRows(rows:EvidenceRow[]){const url=URL.createObjectURL(new Blob(["\uFEFF"+rowsToCsv(rows)],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="baza-nisr-evidence.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);}
+export function DataChart({rows,lang}:{rows:EvidenceRow[];lang:Language}){if(rows.length<2)return null;const max=Math.max(...rows.map(r=>r.value))*1.15;return <div className="data-chart" aria-label={ui[lang].chart}>{rows.slice(0,14).map((r,i)=><div className="bar-row" key={r.id}><span>{rows.every(x=>x.geography===r.geography&&x.group===r.group)?r.period:`${r.label} · ${r.period}`}</span><div className="bar-track"><div className={`bar-fill bar-${i%3}`} style={{width:`${r.value/max*100}%`}}/></div><strong>{r.value}%</strong></div>)}</div>;}
+export function DataTable({rows,lang}:{rows:EvidenceRow[];lang:Language}){const t=ui[lang];return <div className="table-wrap"><table><thead><tr><th>{t.place}</th><th>{t.period}</th><th>{t.value}</th><th>{t.source}</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.label}{r.estimate==="modelled"&&<span className="small-tag">{t.modelled}</span>}</td><td>{r.period}</td><td className="tabular"><strong>{r.value}%</strong>{r.ci&&<small>{t.confidence}: {r.ci[0]}–{r.ci[1]}</small>}</td><td><a href={r.sourceUrl} target="_blank" rel="noopener noreferrer">{r.locator}<ArrowUpRight size={13}/></a></td></tr>)}</tbody></table></div>;}
+export function EvidenceView({answer,lang}:{answer:ChatAnswer;lang:Language}){
+ const t=ui[lang],x=experience[lang],indicator=answer.rows[0]?indicatorFor(answer.rows[0].indicator):undefined;
+ if(!answer.sources.length&&!answer.rows.length)return null;
+ return <div className="evidence-view"><div className="section-heading"><span><ShieldCheck size={17}/>{t.evidence}</span>{answer.rows.length>0&&<button className="text-button" onClick={()=>downloadRows(answer.rows)}><Download size={14}/>{t.download}</button>}</div>
+ <div className="source-links">{answer.sources.map(s=>{const row=answer.rows.find(r=>r.sourceId===s.id);return <a className="source-link" key={s.id} href={s.pdf+(row?`#page=${row.pdfPage}`:'')} target="_blank" rel="noopener noreferrer"><span className="document-icon">PDF</span><span><strong>{s.title}</strong><small>{s.period} · NISR · {t.checked}: {s.retrievedAt}</small>{row&&<span className="source-locator">{row.locator} · PDF {row.pdfPage}</span>}</span><ArrowUpRight size={17}/></a>})}</div>
+ {answer.rows.some(r=>r.estimate==='modelled')&&<p className="definition-text"><Info size={14}/> {answer.notes.find(n=>/modelled|modélis|cyagereranyijwe/.test(n))}</p>}
+ {!!answer.rows.length&&<details className="data-details"><summary>{x.more} ({answer.rows.length})</summary>{answer.calculation&&<div className="calculation"><small>{t.formula}</small><strong>{answer.calculation.formula}</strong><span>{lang==='rw'?'amanota y’ijanisha':lang==='fr'?'points de pourcentage':'percentage points'}</span></div>}<DataChart rows={answer.rows} lang={lang}/><DataTable rows={answer.rows} lang={lang}/></details>}
+ <details className="context-notes"><summary>{x.details}</summary>{indicator&&<dl><dt>{t.definition}</dt><dd>{indicator.definition[lang]}</dd><dt>{x.population}</dt><dd>{indicator.population[lang]}</dd></dl>}{answer.notes.map((n,i)=><p key={i} lang={answer.language}>{n}</p>)}{answer.sources.map(s=><p key={s.id}>{s.methodology[lang]}</p>)}<p>{answer.coverage}</p><p>{x.collectionVersion}: {VERSION}</p></details></div>;
+}

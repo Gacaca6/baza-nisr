@@ -1,0 +1,3 @@
+import type {EvidenceRow} from "./domain";
+export function csvCell(value:unknown){let text=String(value??"");if(/^[=+@\t\r]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';}
+export function rowsToCsv(rows:EvidenceRow[]){const header=["observation_id","indicator","value","unit","reference_period","geography","group","population","estimate_type","method","source_url","source_locator"];return [header,...rows.map(o=>[o.id,o.indicator,o.value,o.unit,o.period,o.geography,o.group,o.population,o.estimate,o.method,o.sourceUrl,o.locator])].map(row=>row.map(csvCell).join(",")).join("\r\n");}

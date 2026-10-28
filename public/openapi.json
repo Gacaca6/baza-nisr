@@ -1,0 +1,429 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Baza NISR API",
+    "version": "1.0.0",
+    "description": "Read-only approved aggregate statistics. No paid model API. Request bodies are bounded to 16 KiB; messages to 2,000 characters. Best-effort per-isolate throttling. Configure exact ALLOWED_ORIGINS for cross-origin POST clients."
+  },
+  "paths": {
+    "/api/v1/chat": {
+      "post": {
+        "summary": "Ask about approved statistics",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supported answer, clarification, discovery or unavailable evidence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "JSON required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "summary": "CORS preflight for configured origins",
+        "responses": {
+          "204": {
+            "description": "Origin allowed"
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "Service readiness and collection counts",
+        "responses": {
+          "200": {
+            "description": "Service readiness and collection counts"
+          }
+        }
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "summary": "Versioned source catalogue and document hashes",
+        "responses": {
+          "200": {
+            "description": "Versioned source catalogue and document hashes"
+          }
+        }
+      }
+    },
+    "/api/v1/observations": {
+      "get": {
+        "summary": "Approved observations and indicator definitions",
+        "responses": {
+          "200": {
+            "description": "Approved observations and indicator definitions"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "indicator",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "poverty",
+                "extreme-poverty",
+                "unemployment",
+                "youth-unemployment",
+                "participation",
+                "employment",
+                "underutilization"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog": {
+      "post": {
+        "summary": "Search NISR metadata with a bounded live MCP request and approved fallback",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "language": {
+                    "enum": [
+                      "en",
+                      "rw",
+                      "fr"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Live or fallback result; mode distinguishes the two; unapproved host links are withheld"
+          },
+          "400": {
+            "description": "Invalid query"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "rw",
+              "fr"
+            ],
+            "default": "en"
+          },
+          "history": {
+            "type": "array",
+            "maxItems": 6,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "role",
+                "content"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "maxLength": 3000
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ChatAnswer": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "language",
+          "status",
+          "answer",
+          "rows",
+          "sources",
+          "notes",
+          "mode"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "en",
+              "rw",
+              "fr"
+            ]
+          },
+          "status": {
+            "enum": [
+              "supported",
+              "clarification",
+              "unavailable",
+              "discovery"
+            ]
+          },
+          "mode": {
+            "const": "verified-evidence"
+          },
+          "title": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "lookup",
+              "compare",
+              "trend",
+              "definition",
+              "discovery"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "value",
+                "period",
+                "geography",
+                "sourceId",
+                "pdfPage",
+                "locator",
+                "estimate"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "unit": {
+                  "const": "%"
+                },
+                "indicator": {
+                  "type": "string"
+                },
+                "period": {
+                  "type": "string"
+                },
+                "year": {
+                  "type": "integer"
+                },
+                "geography": {
+                  "type": "string"
+                },
+                "population": {
+                  "type": "string"
+                },
+                "sourceId": {
+                  "type": "string"
+                },
+                "sourceUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "pdfPage": {
+                  "type": "integer"
+                },
+                "locator": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "estimate": {
+                  "enum": [
+                    "survey",
+                    "modelled"
+                  ]
+                },
+                "ci": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "const": "percentage points"
+              },
+              "formula": {
+                "type": "string"
+              },
+              "inputIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

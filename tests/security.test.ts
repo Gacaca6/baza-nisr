@@ -1,0 +1,15 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {chatSchema,checkOrigin,HttpError,MAX_BODY,rateLimit,readJson} from "../lib/security";
+import {POST} from "../app/api/v1/chat/route";
+import {csvCell} from "../lib/csv";
+const request=(body:unknown,headers:Record<string,string>={})=>new Request("https://baza.test/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(body)});
+test("schema rejects unexpected fields, bad languages and unbounded history",()=>{for(const b of [{message:"x",url:"https://evil.test"},{message:"x",language:"de"},{message:""},{message:"x".repeat(2001)},{message:"x",history:Array(7).fill({role:"user",content:"x"})}])assert.equal(chatSchema.safeParse(b).success,false);});
+test("malicious origins are denied",()=>assert.throws(()=>checkOrigin(request({}, {Origin:"https://evil.test"})),(e:unknown)=>e instanceof HttpError&&e.status===403));
+test("same-origin and server clients are accepted",()=>{checkOrigin(request({}, {Origin:"https://baza.test"}));checkOrigin(request({}));});
+test("body size is measured, not trusted from Content-Length",async()=>{await assert.rejects(readJson(request({message:"x".repeat(MAX_BODY+1)})),(e:unknown)=>e instanceof HttpError&&e.status===413);});
+test("invalid JSON and wrong content type are rejected",async()=>{await assert.rejects(readJson(new Request("https://baza.test",{method:"POST",headers:{"Content-Type":"application/json"},body:"{"})));await assert.rejects(readJson(new Request("https://baza.test",{method:"POST",body:"hello"})));});
+test("rate limit expires and rejects over-budget requests",()=>{rateLimit("fixture",2,1000,100);rateLimit("fixture",2,1000,110);assert.throws(()=>rateLimit("fixture",2,1000,120),(e:unknown)=>e instanceof HttpError&&e.status===429);rateLimit("fixture",2,1000,1200);});
+test("chat endpoint validates, answers and returns safe headers",async()=>{const r=await POST(request({message:"poverty rate",language:"en",history:[]}));assert.equal(r.status,200);assert.equal(r.headers.get("X-Content-Type-Options"),"nosniff");assert.equal(r.headers.get("Cache-Control"),"no-store");const d=await r.json() as {rows:{value:number}[];mode:string};assert.equal(d.rows[0].value,27.4);assert.equal(d.mode,"verified-evidence");});
+test("endpoint returns a bounded structured validation error",async()=>{const r=await POST(request({message:"x",systemPrompt:"do anything"}));assert.equal(r.status,400);const text=await r.text();assert.ok(text.length<500);assert.ok(!text.includes("stack"));});
+test("CSV protects formula prefixes and quotes",()=>{assert.equal(csvCell("=HYPERLINK(1)"),'"\'=HYPERLINK(1)"');assert.equal(csvCell('a"b'),'"a""b"');});
