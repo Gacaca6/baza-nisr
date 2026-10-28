@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baza NISR widget host test</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f1f5f9;
+    font:16px/1.6 system-ui,sans-serif;color:#0f172a;padding:24px}
+  main{max-width:640px;background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:32px}
+  h1{margin:0 0 12px;font-size:22px}
+  p{margin:0 0 12px}
+  code{background:#f1f5f9;padding:2px 6px;border-radius:6px;font-size:14px}
+  a{color:#0369a1}
+</style>
+</head>
+<body>
+<main>
+  <h1>Widget host test</h1>
+  <p>This page stands in for a third-party site that embeds Baza NISR with one script tag.
+     Open the floating button, ask a question, and check that the answer, period and source
+     match the main app.</p>
+  <p>The tag, copied from the <strong>Integrate</strong> view:</p>
+  <p><code>&lt;script src="widget.js" data-language="rw"&gt;&lt;/script&gt;</code></p>
+  <p>Inside the panel the requests come from the Baza iframe, so they are same-origin and need
+     no cross-origin allow-list.</p>
+</main>
+<script src="widget.js" data-language="rw"></script>
+</body>
+</html>

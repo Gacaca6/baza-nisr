@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T06:54:14Z",
+  "generatedAt": "2026-10-28T09:56:23Z",
   "evidenceVersion": "2026-10-27.1",
   "specVersion": "2026-10-28.1",
   "runner": "eval/run.mts",
@@ -23,9 +23,9 @@
     "languageInvariance": "50/50 intents (100.0%)",
     "appropriateRefusal": "60/60 (100.0%)",
     "responseTimeMs": {
-      "p50": 0.334,
-      "p95": 1.559,
-      "max": 6.161
+      "p50": 0.423,
+      "p95": 2.412,
+      "max": 6.196
     }
   },
   "byGroup": {

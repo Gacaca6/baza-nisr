@@ -10,6 +10,8 @@
     "eval": "tsx eval/run.mts",
     "typecheck": "tsc --noEmit",
     "build:node": "next build --webpack",
+    "build:pages": "node scripts/build-pages.mjs",
+    "start:pages": "node scripts/serve-pages.mjs",
     "start:node": "next start",
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "node scripts/run-framework.mjs dev",

@@ -8,29 +8,30 @@ Three surfaces, one evidence engine behind each. Pick by how much of the UI you 
 | `/embed` | The full compact chat as an iframe you size yourself | The iframe and its layout | No |
 | `/api/v1/*` | JSON answers, evidence rows, sources and calculations | The entire interface | Yes, for browser clients |
 
-All three call the same `/api/v1/chat` handler in [lib/answer.ts](../lib/answer.ts), so a figure, a period and a citation cannot differ between them. Machine-readable contract: [public/openapi.json](../public/openapi.json).
+All three ask the same engine — [lib/answer.ts](../lib/answer.ts), called in the browser on the static Pages site and through `POST /api/v1/chat` on a server build — so a figure, a period and a citation cannot differ between them. Machine-readable contract: [public/openapi.json](../public/openapi.json).
+
+The hosted demo at `https://<user>.github.io/baza-nisr/` is the static build: sections 1 and 2 work there as published. Section 3 does not — Pages serves files, so the `/api/v1/*` routes and the live catalogue search only exist in a server build (`npm run build:node`, Docker or the Cloudflare Worker).
 
 ## 1. Website widget
 
 One tag before `</body>`:
 
 ```html
-<script src="https://<baza-origin>/widget.js"
-        data-baza-url="https://<baza-origin>"
+<script src="https://<user>.github.io/baza-nisr/widget.js"
         data-language="rw"></script>
 ```
 
 Behaviour, as implemented in [public/widget.js](../public/widget.js):
 
 - `data-language` — `en`, `rw` or `fr`. Anything else falls back to `en`. It sets only the initial interface language; the visitor can still switch with the RW / EN / FR control.
-- `data-baza-url` — where the assistant lives. Defaults to the URL `widget.js` itself was loaded from, and is rejected unless it parses as `http:` or `https:`.
+- `data-baza-url` — where the assistant lives. Defaults to the URL `widget.js` itself was loaded from, and is rejected unless it parses as `http:` or `https:`. Omit it on Pages: the loader keeps the directory it was served from, so `/baza-nisr/widget.js` opens `/baza-nisr/embed/`.
 - The iframe is created on first open, not on page load, so the ~1–2 GB on-device model chunk is never pulled into a page that only shows the button.
 - Panel markup lives in a shadow root with its own styles; the host page's CSS cannot bleed in and the widget's CSS cannot leak out.
 - The iframe is sandboxed: `allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox`. No `allow-forms`, no `allow-top-navigation`.
 - `Escape` closes the panel, and closing returns focus to the button.
 - A second `<script>` tag on the same page is ignored — the loader refuses to mount twice.
 
-Requests inside the panel originate from the Baza iframe, i.e. from the Baza origin itself, so they are same-origin and need no cross-origin configuration. That is the whole reason the widget exists rather than a browser-side fetch from the host page.
+Requests inside the panel originate from the Baza iframe, i.e. from the Baza origin itself, so they are same-origin and need no cross-origin configuration. That is the whole reason the widget exists rather than a browser-side fetch from the host page. On the Pages build the panel needs no network call at all for an answer — [lib/answer.ts](../lib/answer.ts) runs inside the iframe.
 
 ### Widget preview before you ship it
 
@@ -39,7 +40,7 @@ The **Integrate** view (`/?view=integrate`) renders the live snippet against you
 ## 2. Direct iframe
 
 ```html
-<iframe src="https://<baza-origin>/embed?lang=fr"
+<iframe src="https://<user>.github.io/baza-nisr/embed/?lang=fr"
         title="Baza NISR"
         loading="lazy"
         sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-popups-to-escape-sandbox">
@@ -48,6 +49,8 @@ The **Integrate** view (`/?view=integrate`) renders the live snippet against you
 
 `/embed` is [app/embed/page.tsx](../app/embed/page.tsx) — the same `<BazaApp embedded>` used in the widget. `embedded` drops the NISR-styled masthead, utility bar and side navigation, keeps the language switch, and adds a "new conversation" control that the standalone app has in its sidebar.
 
+On Pages, keep the trailing slash (`/baza-nisr/embed/`): the export is a directory of `index.html` files, and Pages serves the slash form. On a server build both `/embed` and `/embed/` work.
+
 Query parameters (read once on mount, then kept in the URL by `history.replaceState`):
 
 | Parameter | Values | Notes |
@@ -55,11 +58,13 @@ Query parameters (read once on mount, then kept in the URL by `history.replaceSt
 | `lang` | `en` · `rw` · `fr` | Invalid values are ignored; default `en` |
 | `view` | `ask` · `explore` · `sources` · `integrate` · `present` | `ask` is the chat surface |
 
-Embedding is permitted by `frame-ancestors https:` on `/embed` ([lib/response-headers.ts](../lib/response-headers.ts)) — any HTTPS site. The rest of the app is `frame-ancestors 'self' https://chatgpt.com https://*.chatgpt.com https://*.chatgpt.site`, so the full app cannot be framed by an arbitrary site. If you deploy behind plain HTTP for a demo, note that `http://` origins other than `localhost` / `127.0.0.1` are refused framing; serve `/embed` over HTTPS.
+Embedding is permitted by `frame-ancestors https:` on `/embed` ([lib/response-headers.ts](../lib/response-headers.ts)) — any HTTPS site. The rest of the app is `frame-ancestors 'self' https://chatgpt.com https://*.chatgpt.com https://*.chatgpt.site`, so the full app cannot be framed by an arbitrary site. Those headers come from [middleware.ts](../middleware.ts), which Pages does not run: the hosted Pages surface has no framing restriction on any path. If you deploy behind plain HTTP for a demo, note that `http://` origins other than `localhost` / `127.0.0.1` are refused framing; serve `/embed` over HTTPS.
 
 Minimum sensible height is roughly 480 px; the panel in the widget uses `min(420px, 100vw − 32px)` × `min(680px, 100dvh − 120px)` and works down to a 320 px-wide phone.
 
 ## 3. JSON API
+
+Server builds only — Pages has no `/api/v1` routes; use the widget or the iframe there.
 
 Base path `/api/v1`. Content type `application/json` only.
 
@@ -132,7 +137,9 @@ Treat `calculation` as the arithmetic output, not as prose: `formula` and `input
 | `/api/v1/observations` | GET | The full collection; `?indicator=` filters to one of the seven. Bad indicator → `400 UNKNOWN_INDICATOR` |
 | `/api/v1/catalog` | POST | `{query: 2–160 chars, language?}` → live NISR MCP results or local fallback |
 
-`/api/v1/catalog` returns `mode: "live" | "fallback"`. In fallback you are seeing the two approved publications, not the catalogue — say so in your UI. Items whose URL is not on `https://*.statistics.gov.rw` come back with `url: null` and `linkVerified: false`; render "link withheld for review", never a guessed link.
+`/api/v1/catalog` returns `mode: "live" | "fallback"`. In fallback you are seeing the two approved publications, not the catalogue — say so in your UI, and show `reason`, which the response carries whenever the live call failed (`Catalogue HTTP 500`, `Catalogue timed out after 8 seconds`, `Catalogue redirected the request`) rather than swallowing the cause.
+
+`items[].id` is the record's **DDI idno**, for example `RWA_NISR_DOC_2024_LFS-MN_EN_V1`. It is citable even when no link is, so render it. `url` is non-null only when the catalogue's own URL already points at an `https://*.statistics.gov.rw` page; `linkVerified` mirrors that decision. Most NISR records are published through the NADA central repository, and its record ids do not correspond to ids on NISR's microdata bank, so those links are withheld instead of rewritten to a page we cannot verify — point the reader at NISR's catalogue root and the idno instead. Never render a guessed link.
 
 ### Server-side client
 
@@ -147,6 +154,8 @@ JSON
 No key, no token. Requests with no `Origin` header are treated as server-to-server or same-origin.
 
 ## 4. Cross-origin browser calls
+
+Only relevant to a server build: on Pages there is no API route for a browser to call cross-origin, and the widget and `/embed` need no configuration on either host.
 
 `/api/v1/*` rejects a browser `POST` from an origin the operator has not named. Configure exact origins, comma-separated, at deploy time:
 
@@ -186,7 +195,7 @@ Both paths are also covered without a network in `npm test` (`tests/security.tes
 | `message` | 2000 chars | `400 INVALID_INPUT` |
 | `history` | 6 items, 3000 chars each | `400 INVALID_INPUT` |
 | Rate limit | 30 requests / 60 s per client IP **per isolate** | `429 RATE_LIMITED` + `Retry-After: 60` |
-| Live catalogue call | 8 s abort, 400 KB cap | local fallback, `mode: "fallback"` |
+| Live catalogue call | 8 s abort, 400 KB cap, redirects refused | local fallback, `mode: "fallback"` + `reason` |
 | Client timeouts in the UI | 12 s (`AbortSignal.timeout`) | the request is aborted, nothing is retried |
 
 Error bodies are uniform: `{ "error": { "code": "…", "message": "…" } }`. Codes in play: `INVALID_INPUT`, `INVALID_JSON`, `JSON_REQUIRED`, `BODY_TOO_LARGE`, `ORIGIN_DENIED`, `RATE_LIMITED`, `UNKNOWN_INDICATOR`, `BUSY`, `INTERNAL_ERROR`. Messages are already in English and deliberately free of internals; do not surface `INTERNAL_ERROR` details you don't have.

@@ -4,7 +4,7 @@ A trilingual assistant for Rwanda's official statistics. Ask in Kinyarwanda, Eng
 
 **Baza NISR is an independent student hackathon prototype. It is not an NISR product, is not endorsed by NISR, and does not speak for NISR.**
 
-Built for the 2026 NISR Big Data Hackathon. Submission target: a public repository and a deployed URL.
+Built for the 2026 NISR Big Data Hackathon. The public site is a GitHub Pages static build; the same code also runs as a Cloudflare Worker, a Node server or a Docker container when the HTTP API is needed.
 
 ## What it does, and what it refuses
 
@@ -31,15 +31,27 @@ npm run dev          # portable preview at http://localhost:5173
 Verify the whole project locally before publishing:
 
 ```sh
-npm test             # 66 unit tests over routing, evidence and security
+npm test             # 70 unit tests over routing, evidence and security
 npm run eval         # 150 evaluated question-language pairs, writes eval/results.md
 npm run typecheck
+npm run lint
+npm run build:pages  # static site for GitHub Pages, written to out/
+npm run start:pages  # preview out/ at http://127.0.0.1:8788/baza-nisr/
 npm run build        # deployable Cloudflare Worker output in dist/
 ```
 
+Two builds, one engine:
+
+| Build | What it serves | Who uses it |
+| --- | --- | --- |
+| `npm run build:pages` → `out/` | Chat, Explore, Sources, Integrate and the widget, with the answer engine running in the browser | GitHub Pages (free, no server) |
+| `npm run build` / `build:node` | The same UI plus `POST /api/v1/*`, live NISR catalogue search and response headers | self-hosting, and anyone who needs the API |
+
+The static build drops the route handlers and middleware because Pages serves files only, and NISR's catalogue sends no cross-origin headers, so live catalogue search cannot work from a browser. It shows the approved local publication list instead and says so on screen. The numbers are identical: both builds call [lib/answer.ts](lib/answer.ts) with the same pinned evidence.
+
 `npm run typecheck` checks source only. If you have run both `npm run build` (vinext) and `npm run build:node` (Next) in the same checkout, they write different generated types into `.next/types` and the stale pair can report errors inside `.next/types/validator.ts` — nothing to do with your code. Delete `.next` and run it again.
 
-Configuration lives in [.env.example](.env.example) and is optional:
+Configuration lives in [.env.example](.env.example) and is optional. Nothing is needed for `npm run build:pages` — these apply to the server builds.
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
@@ -55,13 +67,15 @@ question + interface language + bounded conversation context
   → identify indicator, geography, period and requested operation
   → filter the verified observation set
   → calculate with a typed function when a comparison is requested
-  → render the answer in the requested language
+  → render the answer as templated sentences in the requested language
   → reject any percentage in the prose that does not come from the returned rows
 ```
 
 The code for that path is [lib/answer.ts](lib/answer.ts), with the evidence in [lib/evidence.ts](lib/evidence.ts) and conversation resolution in [lib/conversation.ts](lib/conversation.ts). Retrieved documents are treated as evidence, never as instructions; document fetching is restricted to `*.statistics.gov.rw` ([lib/catalog.ts](lib/catalog.ts)).
 
 ## Endpoints
+
+Server builds only — `npm run build:pages` publishes the interface without them.
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -79,7 +93,7 @@ Machine-readable contract: [openapi.json](public/openapi.json). Integration reci
 
 - [docs/DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md) — sources, content hashes, verification, and the runbook for adding a publication
 - [docs/EVALUATION.md](docs/EVALUATION.md) — question set, metrics, results and what the run does not prove
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Cloudflare Workers, Docker, environment, cost and handover
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — GitHub Pages first, then Node and Docker, Cloudflare Worker, environment, cost and handover
 - [docs/INTEGRATION.md](docs/INTEGRATION.md) — widget, iframe, API and cross-origin rules
 - [docs/AI_DISCLOSURE.md](docs/AI_DISCLOSURE.md) — where AI was used, and what it is not trusted to do
 
@@ -93,7 +107,7 @@ Read these before citing the prototype in any decision.
 - Comparisons use rounded displayed values. The published change may differ.
 - Kinyarwanda and French wording has not been reviewed by native speakers. The evaluation checks that values, periods and sources survive translation; it does not certify fluency.
 - The rate limiter is per process/isolate. A public rollout needs an edge-level limit.
-- NISR catalogue links outside `statistics.gov.rw` are withheld for review rather than displayed, and empty catalogue pages stop pagination.
+- Catalogue records published outside `statistics.gov.rw` show their DDI identifier instead of a link; we do not rewrite them to an official page we cannot verify.
 - The optional in-browser model needs WebGPU and downloads roughly 1–2 GB. Verified answers work without it.
 - No user study has been run. We make no measured-impact claim.
 
@@ -103,7 +117,7 @@ Read these before citing the prototype in any decision.
 - Public NISR MCP catalogue endpoint and its documented `nada_search_catalog` / `nada_get_metadata` tools: [documentation](https://microdatabk.statistics.gov.rw/mcp-docs).
 - Architecture references studied before writing code: World Bank [Data AI Chatbot](https://github.com/worldbank/data-ai-chatbot) and EPAM [StatGPT](https://github.com/epam/statgpt) for evidence-linked answering, and GOV.UK Chat for public-sector assistant conventions.
 - Interface components use [shadcn/ui](https://ui.shadcn.com/) patterns under the MIT licence; vendored copy and licence note in [vendor/](vendor/). Icons from [lucide](https://lucide.dev/). On-device inference uses [WebLLM](https://github.com/mlc-ai/web-llm) with the Qwen3 1.7B weights hosted by MLC.
-- Framework: [vinext](https://github.com/cloudflare/vinext) on Next.js, deployed as a Cloudflare Worker.
+- Framework: Next.js. Published to GitHub Pages as a static export; the same source also builds to a Cloudflare Worker through [vinext](https://github.com/cloudflare/vinext).
 
 Research notes, the 29-repository licence and activity matrix, and the read-only NISR MCP probes are kept in the sibling `research/` package and are not redistributed here because third-party licences apply.
 
