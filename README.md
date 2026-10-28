@@ -8,18 +8,30 @@ Built for the 2026 NISR Big Data Hackathon. The public site is a GitHub Pages st
 
 **Live demo:** <https://gacaca6.github.io/baza-nisr/> · widget test page: <https://gacaca6.github.io/baza-nisr/widget-host.html>
 
+Submission links and the final form checklist: [docs/SUBMISSION.md](docs/SUBMISSION.md).
+
+## Judges: start here
+
+[docs/JUDGING.md](docs/JUDGING.md) is a 90-second walkthrough with the exact click for each judging criterion, plus what we deliberately do not claim. Short version:
+
+1. Open the live demo. The strip under the heading is the whole evidence claim: two NISR PDFs, checked by SHA-256.
+2. Ask `What is Rwanda's poverty rate?` → 27.4%, with the source PDF, page 81, Table 9.1 and the 95% interval.
+3. Ask `Compare poverty in 2017 and 2024` → the 2017 row is tagged *Modelled baseline*, and the answer says why the published EICV5 figure is not substituted.
+4. Press **RW**, ask the same comparison in Kinyarwanda, then **FR**. The numbers do not move.
+5. Ask `What is the poverty rate in each district?` → all 30 district estimates from Annex Table A9.23 (PDF page 109), ranked, with the five districts whose published coefficient of variation is high flagged in the table. Then ask `What is the extreme poverty rate in Musanze District?` → a refusal, because that cross-tabulation is not in the source.
+
 ## What it does, and what it refuses
 
 Answers come from a small, versioned collection of verified aggregate observations, not from a language model. The model is optional and only ever explains an answer that application code already produced.
 
 | | Behaviour |
 | --- | --- |
-| **Answers** | 64 observations · 7 indicators · 2 official publications · 3 interface languages |
+| **Answers** | 94 observations · 7 indicators · 2 official publications · 3 interface languages |
 | **Cites** | Publication, official PDF URL, page, table locator, reference period, unit, population, methodology note, and a 95% confidence interval where the source publishes one |
 | **Calculates** | Differences between two comparable observations, in application code, from the displayed values |
-| **Refuses** | District values, quarterly or monthly figures, years outside the collection, sex disaggregation the source does not publish, counts of people, forecasts, other countries, incompatible comparisons, and prompt-injection attempts |
+| **Refuses** | Cross-tabulations the source does not publish (extreme poverty or unemployment by district, sex disaggregation of poverty), quarterly or monthly figures, years outside the collection, counts of people, forecasts, other countries, incompatible comparisons, and prompt-injection attempts |
 
-A refusal never substitutes a nearby number. `Poverty in Gasabo district` returns "no verified value for that place in this collection", not a provincial estimate.
+A refusal never substitutes a nearby number. `What is the unemployment rate in Rusizi District?` returns "district estimates in this collection cover the poverty rate only", not the national rate or a provincial figure.
 
 ## Run it
 
@@ -33,8 +45,8 @@ npm run dev          # portable preview at http://localhost:5173
 Verify the whole project locally before publishing:
 
 ```sh
-npm test             # 70 unit tests over routing, evidence and security
-npm run eval         # 150 evaluated question-language pairs, writes eval/results.md
+npm test             # 82 unit tests over routing, evidence, collection counts and security
+npm run eval         # 171 evaluated question-language pairs, writes eval/results.md
 npm run typecheck
 npm run lint
 npm run build:pages  # static site for GitHub Pages, written to out/
@@ -93,8 +105,10 @@ Machine-readable contract: [openapi.json](public/openapi.json). Integration reci
 
 ## Documentation
 
+- [docs/JUDGING.md](docs/JUDGING.md) — 90-second walkthrough, criterion by criterion, and what each claim rests on
 - [docs/DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md) — sources, content hashes, verification, and the runbook for adding a publication
 - [docs/EVALUATION.md](docs/EVALUATION.md) — question set, metrics, results and what the run does not prove
+- [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) — implemented accessibility features and verification limits
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — GitHub Pages first, then Node and Docker, Cloudflare Worker, environment, cost and handover
 - [docs/INTEGRATION.md](docs/INTEGRATION.md) — widget, iframe, API and cross-origin rules
 - [docs/AI_DISCLOSURE.md](docs/AI_DISCLOSURE.md) — where AI was used, and what it is not trusted to do
@@ -104,8 +118,10 @@ Machine-readable contract: [openapi.json](public/openapi.json). Integration reci
 Read these before citing the prototype in any decision.
 
 - The collection is deliberately narrow: EICV7 poverty and living conditions (2023/24) and annual Labour Force Survey indicators (2019–2025). It is not the NISR catalogue.
-- District estimates are absent. The EICV7 report publishes district material; we have not verified it to our standard, so the assistant will not infer a district figure from a provincial one.
-- Two extreme-poverty provincial estimates (City of Kigali 1.1%, Northern 3.2%) are withheld because the source flags their coefficient of variation as above 15%.
+- District estimates cover the 2023/24 headcount poverty rate only, taken from EICV7 Annex Table A9.23. Nothing else is disaggregated by district: extreme poverty has selected national and provincial observations, while labour indicators are national only, and the assistant says so rather than estimating.
+- Five district estimates (Gasabo, Gicumbi, Kicukiro, Nyarugenge, Ruhango) carry a published coefficient of variation above the 15% level Baza flags. They are answered, tagged *Low precision* in the table, and called out in the answer; they are not a ranking.
+- Two extreme-poverty provincial estimates (City of Kigali 1.1%, Northern 3.2%) are withheld entirely because the source flags their coefficient of variation as above 15%.
+- The annex reports Gisagara at 45.6% while the report's own poverty narrative says 46.6%. We publish the table value and record the discrepancy in [docs/DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md).
 - Comparisons use rounded displayed values. The published change may differ.
 - Kinyarwanda and French wording has not been reviewed by native speakers. The evaluation checks that values, periods and sources survive translation; it does not certify fluency.
 - The rate limiter is per process/isolate. A public rollout needs an edge-level limit.

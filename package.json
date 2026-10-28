@@ -12,7 +12,7 @@
     "build:node": "next build --webpack",
     "build:pages": "node scripts/build-pages.mjs",
     "start:pages": "node scripts/serve-pages.mjs",
-    "start:node": "next start",
+    "start:node": "node scripts/start-node.mjs",
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "node scripts/run-framework.mjs dev",
     "build": "node scripts/run-framework.mjs build",

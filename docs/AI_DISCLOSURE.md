@@ -36,7 +36,7 @@ The only model in the product is **opt-in, on-device and non-authoritative**:
 | Not trusted to | Because | Enforced by |
 | --- | --- | --- |
 | Produce, alter or round a statistic | A fluent wrong number is the failure mode this project exists to avoid | The engine only emits values present in the collection; unit and evaluation tests assert every figure against [lib/evidence.ts](../lib/evidence.ts) |
-| Decide whether a question is answerable | Scope refusal must be a rule a reviewer can read, not a model's judgement | `buildAnswer()` returns `unavailable`/`clarification` with `rows: []`; 60 of the 150 evaluations are refusals |
+| Decide whether a question is answerable | Scope refusal must be a rule a reviewer can read, not a model's judgement | `buildAnswer()` returns `unavailable`/`clarification` with `rows: []`; 66 of the 171 evaluations are refusals |
 | Choose or attach a citation | A real-looking citation to the wrong table is worse than no citation | Rows carry `sourceId`, `pdfPage` and `locator` copied from the source; evaluation checks citation correctness separately from value correctness |
 | Add numbers to its own explanation | Model arithmetic is not reproducible | The system prompt: "Never invent statistics… Do not add numbers. Explain only the supplied definition and caveats." `temperature: 0.1`, `max_tokens: 280` |
 | Follow instructions found inside documents or user text | Retrieved content is evidence, not authority | `buildAnswer` rejects injection and secret-extraction requests in all three languages; document fetching is limited to `https://*.statistics.gov.rw`; the catalogue drops any link off that host rather than showing it |
@@ -44,7 +44,7 @@ The only model in the product is **opt-in, on-device and non-authoritative**:
 | Run arbitrary code, SQL or tool calls | No model-side execution exists in this design | No code interpreter, no SQL, no function calling; the API surface is the five documented endpoints with `.strict()` schemas, a 16 KiB body cap and per-isolate throttling ([lib/security.ts](../lib/security.ts)) |
 | Speak for NISR | It is a student prototype | "Baza NISR is a student project, not an official NISR service" appears in the app in all three languages, plus the disclaimer at the top of the README |
 
-The last independent guard is applied after text generation and before display: any percentage appearing in answer prose that is not one of that response's own row values or its calculation is a bug we treat as a release blocker, and `eval/run.mts` fails the run if it finds one.
+The evaluation independently checks generated answers before release: any percentage appearing in the deterministic answer prose that is not one of that response's own row values, published uncertainty fields or calculation is a bug we treat as a release blocker, and `eval/run.mts` fails the run if it finds one.
 
 ## 4. Limits of this disclosure
 
@@ -52,4 +52,4 @@ The last independent guard is applied after text generation and before display: 
 - **The evaluation has no LLM judge.** Expectations were authored before the run, so the harness measures the engine, not a model's opinion of the engine. It is not a benchmark against other assistants, and no comparative performance claim is made.
 - **No user study has been run.** Nothing here is a measured-impact claim.
 - **Third-party licences still apply to third-party artifacts.** Model weights (Qwen3 via MLC, hosted on Hugging Face), WebLLM, Next.js, vinext, lucide and the vendored MIT shadcn/ui components remain under their own terms; attribution is in the README and [vendor/](../vendor/). NISR data and publications remain © NISR. The model's own licence terms and acceptable-use policy were not audited beyond checking that redistribution of the project does not require redistributing the weights, which are downloaded from their public host at runtime.
-- **If you are a judge and want to test the boundary**, the shortest path is to ask the assistant for a district figure, a monthly figure, or a count of people. Every one of those returns a refusal that names what is missing, and none of them reaches a language model.
+- **If you are a judge and want to test the boundary**, the shortest path is to ask the assistant for a district unemployment figure, a monthly figure, or a count of people. Every one of those returns a refusal that names what is missing, and none of them reaches a language model.

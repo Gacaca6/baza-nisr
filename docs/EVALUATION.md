@@ -8,17 +8,17 @@ npm run eval
 
 The runner reads [cases.json](../eval/cases.json), calls the answer path directly for every case in every interface language, checks the result against the expectation written *before* the run, prints failures, exits non-zero if anything fails, and regenerates [results.json](../eval/results.json) and [results.md](../eval/results.md). Commit those two files whenever the collection or the engine changes so published numbers always describe shipped code.
 
-Current run: `150/150` case-language combinations, evidence collection `2026-10-27.1`, question set `2026-10-28.1`.
+Current run: `171/171` case-language combinations, evidence collection `2026-10-28.1`, question set `2026-10-28.2`.
 
 ## Question set
 
-50 intents, each asked in Kinyarwanda, English and French — 150 evaluations.
+57 intents, each asked in Kinyarwanda, English and French — 171 evaluations.
 
 | Group | Intents | What it covers |
 | --- | --- | --- |
-| statistical | 27 | National, urban/rural and all four provincial poverty rates; extreme poverty; the modelled 2017 baseline; rural-urban and 2017-vs-2024 comparisons; unemployment level, trend and sex split; youth unemployment; participation; employment-to-population ratio; labour underutilization; three definitions; one dataset-discovery request |
+| statistical | 32 | National, urban/rural and all four provincial poverty rates; three named districts, a district-to-district comparison and the full 30-district ranking, all from Annex Table A9.23; extreme poverty, including its French and English food-poverty names; the modelled 2017 baseline; rural-urban and 2017-vs-2024 comparisons; unemployment level, trend and sex split; youth unemployment; participation; employment-to-population ratio; labour underutilization; three definitions; one dataset-discovery request |
 | context | 3 | Dimensional follow-up ("And in rural areas?"), period follow-up ("What about 2019?"), and a mid-conversation language switch |
-| unsupported | 20 | Future years, a district value, quarterly and monthly requests, a forecast, another country, sex disaggregation the source does not publish, an incompatible cross-indicator comparison, household-vs-people denominators, two prompt-injection attempts, a greeting, two out-of-scope indicators, a headcount request, and two withheld high-CV estimates |
+| unsupported | 22 | Future years, district cross-tabulations the source does not publish (extreme poverty or unemployment by district, a district in a year without district estimates), quarterly and monthly requests, a forecast, another country, sex disaggregation the source does not publish, an incompatible cross-indicator comparison, household-vs-people denominators, two prompt-injection attempts, a greeting, two out-of-scope indicators, a headcount request, and two withheld high-CV estimates |
 
 Expected values, pages and table locators were transcribed from the pinned publications in `data/originals/` before the engine was run against them. The runner never adjusts an expectation to match output.
 
@@ -26,15 +26,15 @@ Expected values, pages and table locators were transcribed from the pinned publi
 
 | Metric | Denominator | Result | Meaning |
 | --- | --- | --- | --- |
-| Exact-value accuracy | 78 | 78/78 | Returned values equal the published table values |
-| Citation correctness | 78 | 78/78 | Every row carries the expected source, PDF page and table locator |
-| Observation grounding | 105 rows | 105/105 | Every row resolves to a stored observation with the same value and an official `statistics.gov.rw` URL |
-| Traceable figures in prose | 78 | 78/78 | No percentage appears in answer text that is not in that answer's own rows or calculation |
-| Language invariance | 50 intents | 50/50 | The same intent returns the same observation IDs and values in all three languages |
-| Appropriate refusal | 60 | 60/60 | Every unsupported request declines, returns zero rows, and computes nothing |
-| Response time (in-process) | 150 | p50 0.33 ms · p95 2.06 ms · max 6.43 ms | Deterministic answer path, one warm-up call discarded |
+| Exact-value accuracy | 93 | 93/93 | Returned values equal the published table values |
+| Citation correctness | 93 | 93/93 | Every row carries the expected source, PDF page and table locator |
+| Observation grounding | 210 rows | 210/210 | Every row resolves to a stored observation with the same value and an official `statistics.gov.rw` URL |
+| Traceable figures in prose | 93 | 93/93 | No percentage appears in answer text that is not in that answer's own rows or calculation |
+| Language invariance | 57 intents | 57/57 | The same intent returns the same observation IDs and values in all three languages |
+| Appropriate refusal | 66 | 66/66 | Every unsupported request declines, returns zero rows, and computes nothing |
+| Response time (in-process) | 171 | p50 0.356 ms · p95 2.135 ms · max 8.01 ms | Deterministic answer path, one warm-up call discarded |
 
-Per-language pass rate is 50/50 in English, Kinyarwanda and French. Provider cost per answer is zero: the answer path makes no model call and no network request.
+Per-language pass rate is 57/57 in English, Kinyarwanda and French. Provider cost per answer is zero: the answer path makes no model call and no network request.
 
 ## What the first run found
 
@@ -52,7 +52,14 @@ The initial run scored **137/150** — 10 of 50 intents failing, 21 failed check
 
 The employment/unemployment collision is the one worth reading again: an English user asking about unemployment would have been shown a different indicator's number, correctly cited to a real table. Deterministic evidence and a real evaluation set are what caught it.
 
-To confirm the runner is not passing vacuously, `findIndicator` was temporarily forced to match every term: the same suite reported 81/150 with 150 failing checks. The harness detects regressions.
+To confirm the runner is not passing vacuously, `findIndicator` was temporarily forced to match every term: the same suite reported 81/150 with 150 failing checks on the 50-intent set it was run against. The harness detects regressions.
+
+## What the district set changed
+
+Adding 30 district observations was the first time the collection carried figures that a sentence could easily misquote. Two guardrails were written for it:
+
+- Answer prose may name a coefficient of variation only because that number is stored on its own row (`cv`), which the traceable-figures metric then checks. Our own 15% flagging threshold never appears in an answer — a unit test asserts the figure is absent — so a Baza convention can never read as an NISR rule.
+- The `traceableFiguresInProse` denominator rose with the district cases, and the 30-row ranking passes it as a single answer, which is the strongest form of the check in the set.
 
 ## What this run does not prove
 

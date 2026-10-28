@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-28T09:56:23Z",
-  "evidenceVersion": "2026-10-27.1",
-  "specVersion": "2026-10-28.1",
+  "generatedAt": "2026-10-28T21:09:09Z",
+  "evidenceVersion": "2026-10-28.1",
+  "specVersion": "2026-10-28.2",
   "runner": "eval/run.mts",
   "environment": {
     "node": "v22.14.0",
@@ -10,50 +10,50 @@
     "externalCallsPerAnswer": 0
   },
   "totals": {
-    "cases": 150,
-    "passed": 150,
+    "cases": 171,
+    "passed": 171,
     "failed": 0,
     "passRate": "100.0%"
   },
   "metrics": {
-    "exactValueAccuracy": "78/78 (100.0%)",
-    "citationCorrectness": "78/78 (100.0%)",
-    "observationGrounding": "105/105 rows (100.0%)",
-    "traceableFiguresInProse": "78/78 answers (100.0%)",
-    "languageInvariance": "50/50 intents (100.0%)",
-    "appropriateRefusal": "60/60 (100.0%)",
+    "exactValueAccuracy": "93/93 (100.0%)",
+    "citationCorrectness": "93/93 (100.0%)",
+    "observationGrounding": "210/210 rows (100.0%)",
+    "traceableFiguresInProse": "93/93 answers (100.0%)",
+    "languageInvariance": "57/57 intents (100.0%)",
+    "appropriateRefusal": "66/66 (100.0%)",
     "responseTimeMs": {
-      "p50": 0.423,
-      "p95": 2.412,
-      "max": 6.196
+      "p50": 0.356,
+      "p95": 2.135,
+      "max": 8.01
     }
   },
   "byGroup": {
     "statistical": {
-      "total": 81,
-      "pass": 81
+      "total": 96,
+      "pass": 96
     },
     "context": {
       "total": 9,
       "pass": 9
     },
     "unsupported": {
-      "total": 60,
-      "pass": 60
+      "total": 66,
+      "pass": 66
     }
   },
   "byLanguage": {
     "en": {
-      "total": 50,
-      "pass": 50
+      "total": 57,
+      "pass": 57
     },
     "rw": {
-      "total": 50,
-      "pass": 50
+      "total": 57,
+      "pass": 57
     },
     "fr": {
-      "total": 50,
-      "pass": 50
+      "total": 57,
+      "pass": 57
     }
   },
   "failures": []

@@ -81,7 +81,8 @@ function check(evalCase: EvalCase, language: Language, answer: ChatAnswer) {
 
   // A data-bearing answer may only contain percentages that come from its own rows.
   if (answer.status === "supported" && answer.rows.length) {
-    const allowed = new Set<number>(answer.rows.flatMap((r) => [r.value, ...(r.ci ?? [])]).concat(answer.calculation ? [answer.calculation.value] : []));
+    // A district's coefficient of variation is a published figure stored on its own row, so quoting it is traceable.
+    const allowed = new Set<number>(answer.rows.flatMap((r) => [r.value, ...(r.ci ?? []), ...(r.cv === undefined ? [] : [r.cv])]).concat(answer.calculation ? [answer.calculation.value] : []));
     const invented = percentTokens(answer.answer).filter((v) => !allowed.has(v));
     if (invented.length) problems.push(`untraceable figure ${invented.join(", ")}%`);
   }
@@ -121,7 +122,7 @@ for (const evalCase of spec.cases) {
       metricTotals.citation[0] += citedOk ? 1 : 0; metricTotals.citation[1]++;
     }
     if (answer.status === "supported" && answer.rows.length) {
-      const allowed = new Set<number>(answer.rows.flatMap((r) => [r.value, ...(r.ci ?? [])]).concat(answer.calculation ? [answer.calculation.value] : []));
+      const allowed = new Set<number>(answer.rows.flatMap((r) => [r.value, ...(r.ci ?? []), ...(r.cv === undefined ? [] : [r.cv])]).concat(answer.calculation ? [answer.calculation.value] : []));
       const clean = percentTokens(answer.answer).every((v) => allowed.has(v));
       metricTotals.proseNumbers[0] += clean ? 1 : 0; metricTotals.proseNumbers[1]++;
       for (const row of answer.rows) { metricTotals.groundingRows[0] += knownObservations.get(row.id)?.value === row.value ? 1 : 0; metricTotals.groundingRows[1]++; }

@@ -49,3 +49,5 @@ yarn-error.log*
 
 # OS metadata
 .DS_Store
+
+/test-output.txt
