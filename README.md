@@ -6,6 +6,8 @@ A trilingual assistant for Rwanda's official statistics. Ask in Kinyarwanda, Eng
 
 Built for the 2026 NISR Big Data Hackathon. The public site is a GitHub Pages static build; the same code also runs as a Cloudflare Worker, a Node server or a Docker container when the HTTP API is needed.
 
+**Live demo:** <https://gacaca6.github.io/baza-nisr/> · widget test page: <https://gacaca6.github.io/baza-nisr/widget-host.html>
+
 ## What it does, and what it refuses
 
 Answers come from a small, versioned collection of verified aggregate observations, not from a language model. The model is optional and only ever explains an answer that application code already produced.

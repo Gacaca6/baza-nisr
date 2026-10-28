@@ -14,9 +14,11 @@ Both shapes call the same [lib/answer.ts](../lib/answer.ts) over the same pinned
 ### One-time setup
 
 1. Push the repository to GitHub. Pages on a project site needs the repository public for anyone to read it.
-2. **Settings → Pages → Build and deployment → Source: GitHub Actions.** The workflow [deploy-pages.yml](../.github/workflows/deploy-pages.yml) builds and uploads the artifact; if the source is still set to "Deploy from a branch", the deploy job fails with a message about the source type.
+2. **Settings → Pages → Build and deployment → Source: GitHub Actions** — or once from the CLI: `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`. The workflow [deploy-pages.yml](../.github/workflows/deploy-pages.yml) builds and uploads the artifact; if the source is still set to "Deploy from a branch", the deploy job fails with a message about the source type.
 
-After that, every push to `main` verifies the project (typecheck, 70 tests, 150 evaluations) and publishes. Nothing else to configure, no secret to store, no key to rotate.
+After that, every push to `main` verifies the project (typecheck, lint, 70 tests, 150 evaluations) and publishes. Nothing else to configure, no secret to store, no key to rotate.
+
+This is done for the submitted repository: [Gacaca6/baza-nisr](https://github.com/Gacaca6/baza-nisr) publishes to <https://gacaca6.github.io/baza-nisr/>.
 
 ### Build and check it locally
 
@@ -45,12 +47,12 @@ The artifact is ~7.4 MB of files, of which that one lazy chunk is most of the by
 ### Verify the published site
 
 ```sh
-curl -s -o /dev/null -w '%{http_code}\n' https://<user>.github.io/<repo>/
-curl -s -o /dev/null -w '%{http_code}\n' https://<user>.github.io/<repo>/embed/
-curl -s -o /dev/null -w '%{http_code}\n' https://<user>.github.io/<repo>/widget.js
+for p in / /embed/ /widget.js /widget-host.html /openapi.json; do
+  printf '%-18s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' https://<user>.github.io/<repo>$p)"
+done
 ```
 
-All three must be `200`, and the served HTML must reference `/<repo>/_next/…`. Then in the browser, on a phone viewport as well as a desktop one:
+All five must be `200`, and the served HTML must reference `/<repo>/_next/…`. Then in the browser, on a phone viewport as well as a desktop one:
 
 1. Ask one question in each of the three languages; confirm the value, period and source are identical and the decimal separator follows the language (`27.4%` in English, `27,4%` in French).
 2. Use a follow-up ("And in rural areas?") and the language-switch button.
@@ -59,6 +61,8 @@ All three must be `200`, and the served HTML must reference `/<repo>/_next/…`.
 5. Download the CSV from the Explore screen; confirm values and provenance match the screen.
 6. Open `/embed/` inside a page on a **different origin** — [INTEGRATION.md](INTEGRATION.md) has the test snippet.
 7. Tab through the composer and Escape out of the model dialog.
+
+Checked against the published URL on 28 October 2026: the five paths return `200`, the served HTML references `/baza-nisr/_next/…`, the same `27.4` answers in all three languages with `27,4%` in French, "And in rural areas?" resolves to the 31.6% rural row, a district request refuses with no rows, `widget-host.html` opens `/baza-nisr/embed/` in its panel, the Explore table and CSV carry page-level locators, and the layout has no horizontal overflow at a 390 px viewport.
 
 `/api/health` is not part of this deployment. Where a server build is used, check it too:
 
